@@ -132,21 +132,6 @@ class UploadImageDemoState extends State<UploadImageDemo> {
   }
 }
 
-Future<MyDesignData> fetchHK() async {
-  final response = await http.get('http://127.0.0.1:5000/');
-  // throw Exception('log by print');
-
-  if (response.statusCode == 200) {
-    // If the server did return a 200 OK response,
-    // then parse the JSON.
-    return MyDesignData.fromJson(jsonDecode(response.body));
-  } else {
-    // If the server did not return a 200 OK response,
-    // then throw an exception.
-    throw Exception('Failed to load MyDesignData.');
-  }
-}
-
 class MyDesignData {
   final List<List<int>> colorPalette;
   final List<List<int>> colorList;
