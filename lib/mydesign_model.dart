@@ -2,8 +2,6 @@ import 'package:flutter/material.dart'; //google提供のUIデザイン
 import 'package:http/http.dart' as http; //httpリクエスト用
 import 'dart:async'; //非同期処理用
 import 'dart:convert'; //httpレスポンスをJSON形式に変換用
-import 'package:json_annotation/json_annotation.dart';
-import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 
 class UploadImageDemo extends StatefulWidget {
@@ -17,16 +15,18 @@ class UploadImageDemo extends StatefulWidget {
 
 class UploadImageDemoState extends State<UploadImageDemo> {
   //
-  static final String uploadEndPoint = 'http://127.0.0.1:5000/';
-  Future<File> file;
+  static final String uploadEndPoint = 'http://127.0.0.1:5001/';
+  Future<Image> future;
+  Image image;
   String status = '';
-  String base64Image;
-  File tmpFile;
   String errMessage = 'Error Uploading Image';
 
   chooseImage() {
     setState(() {
-      file = ImagePicker.pickImage(source: ImageSource.gallery);
+      future = ImagePicker().getImage(source: ImageSource.gallery).then(
+          (file) => file
+              .readAsBytes()
+              .then((bytes) => Image.memory(bytes, fit: BoxFit.fill)));
     });
     setStatus('');
   }
@@ -39,39 +39,25 @@ class UploadImageDemoState extends State<UploadImageDemo> {
 
   startUpload() {
     setStatus('Uploading Image...');
-    if (null == tmpFile) {
+    if (null == image) {
       setStatus(errMessage);
       return;
     }
-    String fileName = tmpFile.path.split('/').last;
-    upload(fileName);
+    upload();
   }
 
-  upload(String fileName) {
-    http.post(uploadEndPoint, body: {
-      "image": base64Image,
-      "name": fileName,
-    }).then((result) {
-      setStatus(result.statusCode == 200 ? result.body : errMessage);
-    }).catchError((error) {
-      setStatus(error);
-    });
+  upload() async {
+    // TODO
   }
 
   Widget showImage() {
-    return FutureBuilder<File>(
-      future: file,
-      builder: (BuildContext context, AsyncSnapshot<File> snapshot) {
+    return FutureBuilder<Image>(
+      future: future,
+      builder: (BuildContext context, AsyncSnapshot<Image> snapshot) {
         if (snapshot.connectionState == ConnectionState.done &&
             null != snapshot.data) {
-          tmpFile = snapshot.data;
-          base64Image = base64Encode(snapshot.data.readAsBytesSync());
-          return Flexible(
-            child: Image.file(
-              snapshot.data,
-              fit: BoxFit.fill,
-            ),
-          );
+          image = snapshot.data;
+          return Flexible(child: snapshot.data);
         } else if (null != snapshot.error) {
           return const Text(
             'Error Picking Image',

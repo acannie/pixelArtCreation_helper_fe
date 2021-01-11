@@ -25,9 +25,8 @@ dependencies:
     sdk: flutter
   http: ^0.12.0+1
   json_annotation: ^2.0.0
-  image_picker: ^0.6.7+4
-  flutter_web_image_picker: ^0.0.2
-
+  image_picker: ^0.6.7+21
+  image_picker_for_web: ^0.1.0
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
