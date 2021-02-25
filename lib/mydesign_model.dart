@@ -224,27 +224,29 @@ class UploadImageDemoState extends State<UploadImageDemo> {
           myDesignData = snapshot.data;
           return Column(
             children: [
-              for (var i = 0; i < myDesignData.colorList.length; i++)
+              for (var i = 0; i < myDesignData.myDesignColorTable.length; i++)
                 Row(
                   children: [
-                    for (var j = 0; j < myDesignData.colorList.length; j++)
+                    for (var j = 0;
+                        j < myDesignData.myDesignColorTable.length;
+                        j++)
                       Container(
                         decoration: BoxDecoration(
                           border: Border.all(color: Colors.black),
                           color: Color.fromRGBO(
-                            myDesignData.colorPalette[
-                                myDesignData.colorList[i][j] - 1][0],
-                            myDesignData.colorPalette[
-                                myDesignData.colorList[i][j] - 1][1],
-                            myDesignData.colorPalette[
-                                myDesignData.colorList[i][j] - 1][2],
+                            myDesignData.palette[
+                                myDesignData.myDesignColorTable[i][j] - 1][0],
+                            myDesignData.palette[
+                                myDesignData.myDesignColorTable[i][j] - 1][1],
+                            myDesignData.palette[
+                                myDesignData.myDesignColorTable[i][j] - 1][2],
                             1,
                           ),
                         ),
                         width: 15,
                         height: 15,
                         child: Text(
-                          "${myDesignData.colorList[i][j]}",
+                          "${myDesignData.myDesignColorTable[i][j]}",
                           style: TextStyle(
                             fontSize: 10,
                             color: Colors.white,
@@ -281,58 +283,117 @@ class UploadImageDemoState extends State<UploadImageDemo> {
         if (snapshot.connectionState == ConnectionState.done &&
             null != snapshot.data) {
           myDesignData = snapshot.data;
-          return Table(
-            border: TableBorder.all(),
-            defaultVerticalAlignment: TableCellVerticalAlignment.top,
-            children: <TableRow>[
-              TableRow(
-                children: <Widget>[
+          return Column(
+            children: [
+              // index
+              Row(
+                children: [
                   Container(
-                    margin: EdgeInsets.all(2),
-                    color: Colors.orange,
-                    width: 50.0,
-                    height: 50.0,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.black),
+                      color: Colors.white,
+                    ),
+                    width: 75,
+                    height: 25,
                     child: Text(
-                      "hello",
-                      textAlign: TextAlign.center,
+                      "",
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                   Container(
-                    margin: EdgeInsets.all(2),
-                    color: Colors.blue,
-                    width: 50.0,
-                    height: 50.0,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.black),
+                      color: Colors.white,
+                    ),
+                    width: 75,
+                    height: 25,
                     child: Text(
-                      "Row 1 \n Element 2",
-                      textAlign: TextAlign.center,
+                      "色相",
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.black),
+                      color: Colors.white,
+                    ),
+                    width: 75,
+                    height: 25,
+                    child: Text(
+                      "彩度",
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.black),
+                      color: Colors.white,
+                    ),
+                    width: 75,
+                    height: 25,
+                    child: Text(
+                      "明度",
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Colors.black,
+                      ),
                     ),
                   ),
                 ],
               ),
-              TableRow(
-                children: <Widget>[
-                  Container(
-                    margin: EdgeInsets.all(2),
-                    color: Colors.orange,
-                    width: 50.0,
-                    height: 50.0,
-                    child: Text(
-                      "Row 1 \n Element 2",
-                      textAlign: TextAlign.center,
+              // information of each color
+              for (var i = 0; i < myDesignData.myDesignPalette.length; i++)
+                Row(
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.black),
+                        color: Color.fromRGBO(
+                          myDesignData.palette[i][0],
+                          myDesignData.palette[i][1],
+                          myDesignData.palette[i][2],
+                          1,
+                        ),
+                      ),
+                      width: 75,
+                      height: 25,
+                      child: Text(
+                        "${i + 1}",
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
-                  ),
-                  Container(
-                    margin: EdgeInsets.all(2),
-                    color: Colors.blue,
-                    width: 50.0,
-                    height: 50.0,
-                    child: Text(
-                      "Row 1 \n Element 2",
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ],
-              ),
+                    for (var factor = 0;
+                        factor < myDesignData.myDesignPalette[i].length;
+                        factor++)
+                      Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.black),
+                          color: Colors.white,
+                        ),
+                        width: 75,
+                        height: 25,
+                        child: Text(
+                          "${myDesignData.myDesignPalette[i][factor]}",
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ),
+                  ],
+                )
             ],
           );
         } else if (null != snapshot.error) {
@@ -385,10 +446,10 @@ class UploadImageDemoState extends State<UploadImageDemo> {
               children: <Widget>[
                 // SizedBox(height: 20.0),
                 showMyDesign(),
-                // SizedBox(height: 20.0),
+                SizedBox(width: 20.0),
+                showColorPalette(),
               ],
             ),
-            // showColorPalette(),
             Text(
               status,
               textAlign: TextAlign.center,
@@ -409,26 +470,32 @@ class UploadImageDemoState extends State<UploadImageDemo> {
 }
 
 class MyDesignData {
-  final List<List<int>> colorPalette;
-  final List<List<int>> colorList;
+  final List<List<int>> palette;
+  final List<List<int>> myDesignColorTable;
+  final List<List<int>> myDesignPalette;
 
   MyDesignData({
-    this.colorPalette,
-    this.colorList,
+    this.palette,
+    this.myDesignColorTable,
+    this.myDesignPalette,
   });
 
   factory MyDesignData.fromJson(Map<String, dynamic> json) => MyDesignData(
-        colorPalette: List<List<int>>.from(json["palette_colors"]
+        palette: List<List<int>>.from(json["palette"]
             .map((x) => List<int>.from(x.map((x) => x.toInt())))),
-        colorList: List<List<int>>.from(json["color_list"]
+        myDesignColorTable: List<List<int>>.from(json["mydesign_color_table"]
+            .map((x) => List<int>.from(x.map((x) => x.toInt())))),
+        myDesignPalette: List<List<int>>.from(json["mydesign_palette"]
             .map((x) => List<int>.from(x.map((x) => x.toInt())))),
       );
 
   Map<String, dynamic> toJson() => {
-        "colorPalette": List<dynamic>.from(
-            colorPalette.map((x) => List<dynamic>.from(x.map((x) => x)))),
-        "colorList": List<dynamic>.from(
-            colorList.map((x) => List<dynamic>.from(x.map((x) => x)))),
+        "palette": List<dynamic>.from(
+            palette.map((x) => List<dynamic>.from(x.map((x) => x)))),
+        "myDesignColorTable": List<dynamic>.from(
+            myDesignColorTable.map((x) => List<dynamic>.from(x.map((x) => x)))),
+        "myDesignPalette": List<dynamic>.from(
+            myDesignPalette.map((x) => List<dynamic>.from(x.map((x) => x)))),
       };
 
   static String serialize(MyDesignData mat) {
