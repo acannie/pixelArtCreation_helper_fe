@@ -35,6 +35,8 @@ dependencies:
   image: ^2.1.19
   flutter_color: ^1.2.0
   tinycolor: ^1.0.3
+  auto_size_text: ^2.1.0
+  image_whisperer: ^0.11.1
 
 dev_dependencies:
   flutter_test:
