@@ -3,20 +3,21 @@ import 'package:http/http.dart' as http; //httpリクエスト用
 import 'dart:async'; //非同期処理用
 import 'dart:convert'; //httpレスポンスをJSON形式に変換用
 import 'package:image_picker/image_picker.dart';
-import 'package:dio/dio.dart';
+// import 'package:dio/dio.dart';
 import 'dart:io';
 import 'dart:html' as html;
 import 'dart:typed_data';
 import 'package:http_parser/http_parser.dart';
-import 'package:flutter/services.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:flutter_color/flutter_color.dart';
-import 'package:tinycolor/tinycolor.dart';
+// import 'package:flutter/services.dart';
+// import 'package:path_provider/path_provider.dart';
+// import 'package:flutter_color/flutter_color.dart';
+// import 'package:tinycolor/tinycolor.dart';
+import 'dart:math';
+import 'package:auto_size_text/auto_size_text.dart';
+import 'package:image_whisperer/image_whisperer.dart';
 
 class UploadImageDemo extends StatefulWidget {
   UploadImageDemo() : super();
-
-  final String title = "AC MyDesigner";
 
   @override
   UploadImageDemoState createState() => UploadImageDemoState();
@@ -30,13 +31,14 @@ class UploadImageDemoState extends State<UploadImageDemo> {
   final String url = 'http://127.0.0.1:5000/';
   String jsonString;
   Size size;
+  File _image;
 
   List<int> _selectedFile;
   Uint8List _bytesData;
   // GlobalKey<FormState> _formKey = new GlobalKey<FormState>();
 
   MyDesignData myDesignData;
-  Future<MyDesignData> futureMyDesignData;
+  // Future<MyDesignData> futureMyDesignData;
 
   setStatus(String message) {
     setState(() {
@@ -94,6 +96,20 @@ class UploadImageDemoState extends State<UploadImageDemo> {
     uploadInput.draggable = true;
     uploadInput.click();
 
+    // final picker = ImagePicker();
+
+    // Future getImage() async {
+    //   final pickedFile = await picker.getImage(source: ImageSource.camera);
+
+    //   setState(() {
+    //     if (pickedFile != null) {
+    //       _image = File(pickedFile.path);
+    //     } else {
+    //       print('No image selected.');
+    //     }
+    //   });
+    // }
+
     uploadInput.onChange.listen((e) {
       final files = uploadInput.files;
       final file = files[0];
@@ -103,6 +119,14 @@ class UploadImageDemoState extends State<UploadImageDemo> {
         _handleResult(reader.result);
       });
       reader.readAsDataUrl(file);
+
+      reader.onLoad.first.then((res) {
+        final encoded = reader.result as String;
+        final imageBase64 =
+            encoded.replaceFirst(RegExp(r'data:image/[^;]+;base64,'), '');
+        File _itemPicIoFile = File.fromRawPath(base64Decode(imageBase64));
+        setState(() => {_image = _itemPicIoFile});
+      });
     });
 
     // final _pickedFile =
@@ -155,35 +179,22 @@ class UploadImageDemoState extends State<UploadImageDemo> {
   }
 
   Widget showImage() {
-    return FutureBuilder<Image>(
-      future: futureImage,
-      builder: (BuildContext context, AsyncSnapshot<Image> snapshot) {
-        if (snapshot.connectionState == ConnectionState.done &&
-            null != snapshot.data) {
-          image = snapshot.data;
-          return ConstrainedBox(
-            constraints: BoxConstraints(maxHeight: 200),
-            child: image,
-          );
-        } else if (null != snapshot.error) {
-          return const Text(
-            'Error Picking Image',
-            textAlign: TextAlign.center,
-          );
-        }
-        return Container(
+    if (_image == null) {
+      return Center(
+        child: Container(
           child: Text(
             'No Image Selected',
-            textAlign: TextAlign.center,
           ),
           height: 100,
           width: 100,
           decoration: BoxDecoration(
             border: Border.all(color: Colors.blue),
           ),
-        );
-      },
-    );
+        ),
+      );
+    } else {
+      return Center(child: Image.file(_image));
+    }
   }
 
   Widget appBarMain() {
@@ -215,47 +226,104 @@ class UploadImageDemoState extends State<UploadImageDemo> {
     );
   }
 
+  Border markLineBorder(int i, int j, int n) {
+    int halfwayPoint = (n / 2).round();
+    return Border(
+      bottom: (() {
+        if (i + 1 == halfwayPoint) {
+          return BorderSide(
+            color: Colors.black38,
+            width: 2,
+          );
+        } else {
+          return BorderSide(
+            color: Colors.black12,
+            width: 1,
+          );
+        }
+      })(),
+      right: (() {
+        if (j + 1 == halfwayPoint) {
+          return BorderSide(
+            color: Colors.black38,
+            width: 2,
+          );
+        } else {
+          return BorderSide(
+            color: Colors.black12,
+            width: 1,
+          );
+        }
+      })(),
+    );
+  }
+
   Widget showMyDesign() {
+    Size screenSize = MediaQuery.of(context).size;
     return FutureBuilder<MyDesignData>(
       future: retFutureMyDesignData(jsonString),
       builder: (BuildContext context, AsyncSnapshot<MyDesignData> snapshot) {
         if (snapshot.connectionState == ConnectionState.done &&
             null != snapshot.data) {
           myDesignData = snapshot.data;
-          return Column(
-            children: [
-              for (var i = 0; i < myDesignData.myDesignColorTable.length; i++)
-                Row(
-                  children: [
-                    for (var j = 0;
-                        j < myDesignData.myDesignColorTable.length;
-                        j++)
-                      Container(
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.black),
-                          color: Color.fromRGBO(
-                            myDesignData.palette[
-                                myDesignData.myDesignColorTable[i][j] - 1][0],
-                            myDesignData.palette[
-                                myDesignData.myDesignColorTable[i][j] - 1][1],
-                            myDesignData.palette[
-                                myDesignData.myDesignColorTable[i][j] - 1][2],
-                            1,
+          return ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: 600),
+            child: Container(
+              child: Column(
+                children: [
+                  for (var i = 0;
+                      i < myDesignData.myDesignColorTable.length;
+                      i++)
+                    Row(
+                      children: [
+                        for (var j = 0;
+                            j < myDesignData.myDesignColorTable.length;
+                            j++)
+                          Expanded(
+                            flex: 1,
+                            child: Container(
+                              // width: 10,
+                              // height: 10,
+                              decoration: BoxDecoration(
+                                color: Color.fromRGBO(
+                                  myDesignData.palette[
+                                      myDesignData.myDesignColorTable[i][j]][0],
+                                  myDesignData.palette[
+                                      myDesignData.myDesignColorTable[i][j]][1],
+                                  myDesignData.palette[
+                                      myDesignData.myDesignColorTable[i][j]][2],
+                                  1,
+                                ),
+                                border: markLineBorder(i, j,
+                                    myDesignData.myDesignColorTable.length),
+                              ),
+                              child: AutoSizeText(
+                                "${myDesignData.myDesignColorTable[i][j] + 1}",
+                                maxLines: 1,
+                                style: TextStyle(
+                                    color: fontColor(
+                                  Color.fromRGBO(
+                                    myDesignData.palette[myDesignData
+                                        .myDesignColorTable[i][j]][0],
+                                    myDesignData.palette[myDesignData
+                                        .myDesignColorTable[i][j]][1],
+                                    myDesignData.palette[myDesignData
+                                        .myDesignColorTable[i][j]][2],
+                                    1,
+                                  ),
+                                )),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
                           ),
-                        ),
-                        width: 15,
-                        height: 15,
-                        child: Text(
-                          "${myDesignData.myDesignColorTable[i][j]}",
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                  ],
-                )
-            ],
+                      ],
+                    ),
+                ],
+              ),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.black),
+              ),
+            ),
           );
         } else if (null != snapshot.error) {
           return Container(
@@ -276,125 +344,121 @@ class UploadImageDemoState extends State<UploadImageDemo> {
     );
   }
 
+  Color fontColor(Color backgroundColor) {
+    int brightness = [
+      backgroundColor.red,
+      backgroundColor.green,
+      backgroundColor.blue
+    ].reduce(max);
+    if (brightness > 180) {
+      return Colors.black;
+    } else {
+      return Colors.white;
+    }
+  }
+
   Widget showColorPalette() {
+    Size screenSize = MediaQuery.of(context).size;
+
+    List<String> columnTitles = ["", "色相", "彩度", "明度"];
     return FutureBuilder<MyDesignData>(
       future: retFutureMyDesignData(jsonString),
       builder: (BuildContext context, AsyncSnapshot<MyDesignData> snapshot) {
         if (snapshot.connectionState == ConnectionState.done &&
             null != snapshot.data) {
           myDesignData = snapshot.data;
-          return Column(
-            children: [
-              // index
-              Row(
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.black),
-                      color: Colors.white,
-                    ),
-                    width: 75,
-                    height: 25,
-                    child: Text(
-                      "",
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.black),
-                      color: Colors.white,
-                    ),
-                    width: 75,
-                    height: 25,
-                    child: Text(
-                      "色相",
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: Colors.black,
-                      ),
-                    ),
-                  ),
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.black),
-                      color: Colors.white,
-                    ),
-                    width: 75,
-                    height: 25,
-                    child: Text(
-                      "彩度",
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: Colors.black,
-                      ),
-                    ),
-                  ),
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.black),
-                      color: Colors.white,
-                    ),
-                    width: 75,
-                    height: 25,
-                    child: Text(
-                      "明度",
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: Colors.black,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              // information of each color
-              for (var i = 0; i < myDesignData.myDesignPalette.length; i++)
+          return ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: 300),
+            child: Column(
+              children: [
+                // index
                 Row(
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.black),
-                        color: Color.fromRGBO(
-                          myDesignData.palette[i][0],
-                          myDesignData.palette[i][1],
-                          myDesignData.palette[i][2],
-                          1,
+                  children: columnTitles
+                      .map(
+                        (columnTitle) => Expanded(
+                          flex: 1,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.black),
+                              color: Colors.white,
+                            ),
+                            // width: screenSize.width * 0.1,
+                            // height: screenSize.height * 0.025,
+                            child: AutoSizeText(
+                              columnTitle.toString(),
+                              maxLines: 1,
+                              style: TextStyle(
+                                fontSize: 20,
+                                color: Colors.black,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
                         ),
-                      ),
-                      width: 75,
-                      height: 25,
-                      child: Text(
-                        "${i + 1}",
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                    for (var factor = 0;
-                        factor < myDesignData.myDesignPalette[i].length;
-                        factor++)
-                      Container(
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.black),
-                          color: Colors.white,
-                        ),
-                        width: 75,
-                        height: 25,
-                        child: Text(
-                          "${myDesignData.myDesignPalette[i][factor]}",
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: Colors.black,
+                      )
+                      .toList(),
+                ),
+                // information of each color
+                for (var i = 0; i < myDesignData.myDesignPalette.length; i++)
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 1,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.black),
+                            color: Color.fromRGBO(
+                              myDesignData.palette[i][0],
+                              myDesignData.palette[i][1],
+                              myDesignData.palette[i][2],
+                              1,
+                            ),
+                          ),
+                          // width: screenSize.width * 0.1,
+                          // height: screenSize.height * 0.025,
+                          child: AutoSizeText(
+                            "${i + 1}",
+                            maxLines: 1,
+                            style: TextStyle(
+                              fontSize: 20,
+                              color: fontColor(
+                                Color.fromRGBO(
+                                  myDesignData.palette[i][0],
+                                  myDesignData.palette[i][1],
+                                  myDesignData.palette[i][2],
+                                  1,
+                                ),
+                              ),
+                            ),
+                            textAlign: TextAlign.center,
                           ),
                         ),
                       ),
-                  ],
-                )
-            ],
+                      for (var factor = 0;
+                          factor < myDesignData.myDesignPalette[i].length;
+                          factor++)
+                        Expanded(
+                          flex: 1,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.black),
+                              color: Colors.white,
+                            ),
+                            child: AutoSizeText(
+                              "${myDesignData.myDesignPalette[i][factor]}",
+                              maxLines: 1,
+                              style: TextStyle(
+                                fontSize: 20,
+                                color: Colors.black,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                    ],
+                  )
+              ],
+            ),
           );
         } else if (null != snapshot.error) {
           return Container(
@@ -417,52 +481,71 @@ class UploadImageDemoState extends State<UploadImageDemo> {
 
   @override
   Widget build(BuildContext context) {
-    size = MediaQuery.of(context).size;
+    Size screenSize = MediaQuery.of(context).size;
     return Scaffold(
       appBar: appBarMain(),
-      body: Container(
-        padding: EdgeInsets.all(30.0),
-        child: Column(
-          children: <Widget>[
-            showImage(),
-            SizedBox(
-              height: 20.0,
-            ),
-            OutlinedButton(
-              onPressed: startWebFilePicker,
-              child: Text('Choose Image'),
-            ),
-            SizedBox(
-              height: 20.0,
-            ),
-            OutlinedButton(
-              onPressed: makeRequest,
-              child: Text('Upload Image'),
-            ),
-            SizedBox(
-              height: 20.0,
-            ),
-            Row(
-              children: <Widget>[
-                // SizedBox(height: 20.0),
-                showMyDesign(),
-                SizedBox(width: 20.0),
-                showColorPalette(),
-              ],
-            ),
-            Text(
-              status,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.green,
-                fontWeight: FontWeight.w500,
-                fontSize: 20.0,
+      body: Center(
+        child: Container(
+          child: SingleChildScrollView(
+            child: Container(
+              padding: EdgeInsets.all(30.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  showImage(),
+                  Padding(
+                    padding: EdgeInsets.all(20),
+                    child: OutlinedButton(
+                      onPressed: startWebFilePicker,
+                      child: Text('Choose Image'),
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.all(20),
+                    child: OutlinedButton(
+                      onPressed: makeRequest,
+                      child: Text('Upload Image'),
+                    ),
+                  ),
+                  Wrap(
+                    direction: Axis.horizontal,
+
+                    // mainAxisSize: MainAxisSize.max,
+                    // mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      Padding(
+                        padding: EdgeInsets.all(20),
+                        child: showMyDesign(),
+                      ),
+                      // ConstrainedBox(
+                      //   constraints: BoxConstraints(maxWidth: 300),
+                      //   child: SizedBox(
+                      //     width: screenSize.width * 0.6,
+                      //     child: ElevatedButton(
+                      //       child: Text('Happy Flutter'),
+                      //       onPressed: () {},
+                      //     ),
+                      //   ),
+                      // ),
+                      Padding(
+                        padding: EdgeInsets.all(20),
+                        child: showColorPalette(),
+                      ),
+                    ],
+                  ),
+                  // SelectableText(
+                  //   status,
+                  //   textAlign: TextAlign.center,
+                  //   style: TextStyle(
+                  //     color: Colors.green,
+                  //     fontWeight: FontWeight.w500,
+                  //     fontSize: 20.0,
+                  //   ),
+                  // ),
+                ],
               ),
             ),
-            SizedBox(
-              height: 20.0,
-            ),
-          ],
+          ),
         ),
       ),
     );
